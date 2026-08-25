@@ -1,10 +1,69 @@
 import json
 import datetime
+from sqlalchemy import text
 from database.db import engine, Base, SessionLocal
 from database.models import Patient, Assessment, Referral, FollowUp, HealthcareCenter, AshaUser
 
+def migrate_db():
+    """
+    Safely adds new columns to existing SQLite tables if not already present.
+    Non-destructive; does not delete, drop, or recreate tables.
+    """
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(text("PRAGMA table_info(assessments);"))
+            existing_columns = [row[1] for row in result.fetchall()]
+            
+            if existing_columns:
+                if "bleeding_duration_days" not in existing_columns:
+                    conn.execute(text("ALTER TABLE assessments ADD COLUMN bleeding_duration_days INTEGER;"))
+                    print("Schema migration: Added 'bleeding_duration_days' column to assessments table.")
+                    
+                if "heavy_bleeding" not in existing_columns:
+                    conn.execute(text("ALTER TABLE assessments ADD COLUMN heavy_bleeding BOOLEAN;"))
+                    print("Schema migration: Added 'heavy_bleeding' column to assessments table.")
+
+                # Canonical Standalone ML Microservice Columns (Phase 4)
+                new_canonical_cols = [
+                    ("ml_available", "BOOLEAN"),
+                    ("ml_error", "VARCHAR"),
+                    ("pcos_probability", "FLOAT"),
+                    ("model_prediction", "INTEGER"),
+                    ("model_prediction_label", "VARCHAR"),
+                    ("overall_prediction", "VARCHAR"),
+                    ("overall_reasons_json", "TEXT"),
+                    ("red_flags_json", "TEXT"),
+                    ("recommendation", "TEXT"),
+                    ("warnings_json", "TEXT"),
+                    ("model_limitations_json", "TEXT"),
+                    ("disclaimer", "TEXT"),
+                    # Safety Triage V2 Columns
+                    ("dizziness", "BOOLEAN"),
+                    ("fainting", "BOOLEAN"),
+                    ("shortness_of_breath", "BOOLEAN"),
+                    ("rapid_pad_saturation", "BOOLEAN"),
+                    ("flooding_gushing", "BOOLEAN"),
+                    ("large_blood_clots", "BOOLEAN"),
+                    ("pregnancy_possible", "BOOLEAN"),
+                    ("sudden_severe_pelvic_pain", "BOOLEAN"),
+                    ("one_sided_pelvic_pain", "BOOLEAN"),
+                    ("shoulder_tip_pain", "BOOLEAN"),
+                    ("fever_chills", "BOOLEAN"),
+                    ("unable_to_keep_fluids", "BOOLEAN"),
+                    ("bleeding_between_periods", "BOOLEAN"),
+                    ("bleeding_after_sex", "BOOLEAN"),
+                ]
+
+                for col_name, col_type in new_canonical_cols:
+                    if col_name not in existing_columns:
+                        conn.execute(text(f"ALTER TABLE assessments ADD COLUMN {col_name} {col_type};"))
+                        print(f"Schema migration: Added '{col_name}' ({col_type}) column to assessments table.")
+        except Exception as e:
+            print(f"Migration check exception: {e}")
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    migrate_db()
     db = SessionLocal()
 
     # 1. Seed Healthcare Centers (Ayushman Arogya Mandir, PHCs, CHCs)

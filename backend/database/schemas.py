@@ -12,6 +12,8 @@ class AssessmentInputSchema(BaseModel):
     
     cycle_length: str = "21-35 days"
     cycle_regularity: str = "Regular"
+    bleeding_duration_days: int = Field(..., ge=1, le=100, description="Menstrual bleeding / period duration in days")
+    heavy_bleeding: bool = Field(..., description="Unusually heavy menstrual bleeding")
     symptom_duration: str = "1-3 months"
     
     facial_hair: Any = False

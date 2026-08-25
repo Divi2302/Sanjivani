@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1150 780" width="100%" height="100%" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="flowBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+    <filter id="boxShadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.06" />
+    </filter>
+    <marker id="flowArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7" />
+    </marker>
+    <marker id="successArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="575" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">End-to-End Request &amp; Response Data Flow</text>
+  <text x="575" y="58" text-anchor="middle" font-size="13" fill="#64748b">Detailed schema transformations from client submission to ML inference and multi-layered database persistence</text>
+
+  <!-- Stage 1: Frontend Payload -->
+  <g transform="translate(40, 85)">
+    <rect width="250" height="620" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#boxShadow)"/>
+    <rect x="0" y="0" width="250" height="42" rx="8" fill="#e0f2fe" />
+    <text x="125" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0369a1">1. Frontend JSON Payload</text>
+    <text x="125" y="60" text-anchor="middle" font-size="11" fill="#64748b">POST /api/assessments</text>
+
+    <!-- Fields -->
+    <g transform="translate(16, 75)" font-size="11" font-family="monospace">
+      <text y="15" fill="#334155"><tspan fill="#0284c7">patient_code:</tspan> "PAT-1089"</text>
+      <text y="35" fill="#334155"><tspan fill="#0284c7">age:</tspan> 30</text>
+      <text y="55" fill="#334155"><tspan fill="#0284c7">height_cm:</tspan> 165.0</text>
+      <text y="75" fill="#334155"><tspan fill="#0284c7">weight_kg:</tspan> 70.0</text>
+      <text y="95" fill="#334155"><tspan fill="#0284c7">weight_gain:</tspan> true</text>
+      <text y="115" fill="#dc2626" font-weight="bold"><tspan fill="#b91c1c">cycle_length:</tspan> "21-35 days"</text>
+      <text y="135" fill="#334155"><tspan fill="#0284c7">cycle_regularity:</tspan> "Irregular"</text>
+      <text y="155" fill="#16a34a" font-weight="bold"><tspan fill="#15803d">bleeding_duration_days:</tspan> 6</text>
+      <text y="175" fill="#16a34a" font-weight="bold"><tspan fill="#15803d">heavy_bleeding:</tspan> true</text>
+      <text y="195" fill="#334155"><tspan fill="#0284c7">facial_hair:</tspan> true</text>
+      <text y="215" fill="#334155"><tspan fill="#0284c7">acne:</tspan> false</text>
+      <text y="235" fill="#334155"><tspan fill="#0284c7">hair_loss:</tspan> false</text>
+      <text y="255" fill="#334155"><tspan fill="#0284c7">dark_skin:</tspan> false</text>
+      <text y="275" fill="#334155"><tspan fill="#0284c7">fast_food:</tspan> "Rarely"</text>
+      <text y="295" fill="#334155"><tspan fill="#0284c7">exercise:</tspan> "Regularly"</text>
+      <text y="315" fill="#334155"><tspan fill="#0284c7">vomiting:</tspan> true</text>
+      <text y="335" fill="#334155"><tspan fill="#0284c7">blood_in_stool:</tspan> false</text>
+      <text y="355" fill="#334155"><tspan fill="#0284c7">pain_severity:</tspan> 2</text>
+      
+      <!-- Non-ML App fields -->
+      <line x1="-5" y1="375" x2="225" y2="375" stroke="#e2e8f0" stroke-dasharray="2 2"/>
+      <text y="395" fill="#94a3b8" font-size="10">Application Context Only:</text>
+      <text y="415" fill="#64748b"><tspan fill="#94a3b8">thyroid:</tspan> "No"</text>
+      <text y="435" fill="#64748b"><tspan fill="#94a3b8">diabetes:</tspan> "No"</text>
+      <text y="455" fill="#64748b"><tspan fill="#94a3b8">family_pcos:</tspan> "No"</text>
+      <text y="475" fill="#64748b"><tspan fill="#94a3b8">diet_quality:</tspan> "Adequate"</text>
+      <text y="495" fill="#64748b"><tspan fill="#94a3b8">pain_location:</tspan> "Lower ab"</text>
+      <text y="515" fill="#64748b"><tspan fill="#94a3b8">wellbeing:</tspan> "Calm / Stable"</text>
+    </g>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <path d="M 290 320 L 325 320" stroke="#0284c7" stroke-width="2" fill="none" marker-end="url(#flowArrow)"/>
+
+  <!-- Stage 2: Mapper & ML Request Payload -->
+  <g transform="translate(330, 85)">
+    <rect width="250" height="620" rx="8" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1.5" filter="url(#boxShadow)"/>
+    <rect x="0" y="0" width="250" height="42" rx="8" fill="#bae6fd" />
+    <text x="125" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0369a1">2. ML Service Request</text>
+    <text x="125" y="60" text-anchor="middle" font-size="11" fill="#0284c7">POST /predict (16 fields)</text>
+
+    <!-- Transformed Fields -->
+    <g transform="translate(16, 75)" font-size="11" font-family="monospace">
+      <text y="15" fill="#0f172a"><tspan fill="#0369a1">age:</tspan> 30</text>
+      <text y="35" fill="#0f172a"><tspan fill="#0369a1">weight:</tspan> 70.0</text>
+      <text y="55" fill="#0f172a"><tspan fill="#0369a1">height:</tspan> 165.0</text>
+      <text y="75" fill="#0f172a"><tspan fill="#0369a1">cycle_type:</tspan> "irregular"</text>
+      <rect x="-4" y="85" width="225" height="22" rx="3" fill="#dcfce7" stroke="#86efac"/>
+      <text y="100" fill="#15803d" font-weight="bold"><tspan fill="#166534">cycle_length:</tspan> 6 (days)</text>
+      <text y="125" fill="#0f172a"><tspan fill="#0369a1">weight_gain:</tspan> true</text>
+      <text y="145" fill="#0f172a"><tspan fill="#0369a1">hair_growth:</tspan> true</text>
+      <text y="165" fill="#0f172a"><tspan fill="#0369a1">skin_darkening:</tspan> false</text>
+      <text y="185" fill="#0f172a"><tspan fill="#0369a1">hair_loss:</tspan> false</text>
+      <text y="205" fill="#0f172a"><tspan fill="#0369a1">pimples:</tspan> false</text>
+      <text y="225" fill="#0f172a"><tspan fill="#0369a1">fast_food:</tspan> false</text>
+      <text y="245" fill="#0f172a"><tspan fill="#0369a1">regular_exercise:</tspan> true</text>
+      <text y="265" fill="#0f172a"><tspan fill="#0369a1">heavy_bleeding:</tspan> true</text>
+      <text y="285" fill="#0f172a"><tspan fill="#0369a1">severe_pain:</tspan> false (2&lt;4)</text>
+      <text y="305" fill="#0f172a"><tspan fill="#0369a1">blood_in_stool:</tspan> false</text>
+      <text y="325" fill="#0f172a"><tspan fill="#0369a1">vomiting:</tspan> true</text>
+
+      <!-- Mapping Annotations -->
+      <rect x="-6" y="360" width="230" height="150" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+      <text y="380" fill="#1e293b" font-weight="bold" font-sans="true">Mapping Transformations:</text>
+      <text y="400" fill="#475569" font-size="10.5">• cycle_reg "Irreg" ➔ "irregular"</text>
+      <text y="420" fill="#475569" font-size="10.5">• fast_food "Rarely" ➔ false</text>
+      <text y="440" fill="#475569" font-size="10.5">• exercise "Reg" ➔ true</text>
+      <text y="460" fill="#475569" font-size="10.5">• pain 2 ➔ severe_pain=false</text>
+      <text y="480" fill="#15803d" font-weight="bold" font-size="10.5">• bleeding_days ➔ cycle_len</text>
+    </g>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <path d="M 580 320 L 615 320" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#flowArrow)"/>
+
+  <!-- Stage 3: ML Microservice Evaluation -->
+  <g transform="translate(620, 85)">
+    <rect width="240" height="620" rx="8" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.5" filter="url(#boxShadow)"/>
+    <rect x="0" y="0" width="240" height="42" rx="8" fill="#ede9fe" />
+    <text x="120" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#6b21a8">3. ML Service Response</text>
+    <text x="120" y="60" text-anchor="middle" font-size="11" fill="#7c3aed">Validated Inference Object</text>
+
+    <!-- Response Structure -->
+    <g transform="translate(14, 75)" font-size="11" font-family="monospace">
+      <text y="15" fill="#4338ca" font-weight="bold"><tspan fill="#6b21a8">pcos_probability:</tspan> 0.6455</text>
+      <text y="35" fill="#4338ca"><tspan fill="#6b21a8">model_prediction:</tspan> 1</text>
+      <text y="55" fill="#4338ca" font-size="10"><tspan fill="#6b21a8">label:</tspan> "Higher PCOS risk"</text>
+      
+      <rect x="-4" y="70" width="215" height="24" rx="4" fill="#fae8ff" stroke="#f0abfc"/>
+      <text y="86" fill="#86198f" font-weight="bold"><tspan fill="#701a75">overall_pred:</tspan> "HIGH"</text>
+      
+      <text y="115" fill="#0f172a" font-weight="bold">red_flags (2):</text>
+      <text y="132" fill="#b91c1c" font-size="9.5">1. Heavy bleeding</text>
+      <text y="147" fill="#b91c1c" font-size="9.5">2. Persistent vomiting</text>
+      
+      <text y="172" fill="#0f172a" font-weight="bold">overall_reasons (4):</text>
+      <text y="190" fill="#475569" font-size="9.5">1. Heavy bleeding reported</text>
+      <text y="206" fill="#475569" font-size="9.5">2. Persistent vomiting</text>
+      <text y="222" fill="#475569" font-size="9.5">3. Irregular cycle pattern</text>
+      <text y="238" fill="#475569" font-size="9.5">4. ML prob elevated (64.5%)</text>
+      
+      <text y="265" fill="#0f172a" font-weight="bold">recommendation:</text>
+      <text y="282" fill="#475569" font-size="9.5">"Prompt consultation with</text>
+      <text y="296" fill="#475569" font-size="9.5">specialist recommended."</text>
+      
+      <text y="325" fill="#0f172a"><tspan fill="#6b21a8">bmi:</tspan> 25.71</text>
+      <text y="345" fill="#0f172a"><tspan fill="#6b21a8">warnings:</tspan> []</text>
+      
+      <rect x="-4" y="365" width="215" height="75" rx="4" fill="#fef3c7" stroke="#fde68a"/>
+      <text y="385" fill="#92400e" font-weight="bold" font-size="10">Clinical Safety Logic:</text>
+      <text y="405" fill="#78350f" font-size="9.5">Vomiting + Heavy Bleeding</text>
+      <text y="420" fill="#78350f" font-size="9.5">➔ Elevates Triage to HIGH</text>
+      <text y="433" fill="#78350f" font-size="9.5">(Overriding routine ML score)</text>
+    </g>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <path d="M 860 320 L 895 320" stroke="#059669" stroke-width="2" fill="none" marker-end="url(#successArrow)"/>
+
+  <!-- Stage 4: Main Backend Combined Response -->
+  <g transform="translate(900, 85)">
+    <rect width="210" height="620" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" filter="url(#boxShadow)"/>
+    <rect x="0" y="0" width="210" height="42" rx="8" fill="#bbf7d0" />
+    <text x="105" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#166534">4. Final Response</text>
+    <text x="105" y="60" text-anchor="middle" font-size="11" fill="#15803d">Client API + DB Persistence</text>
+
+    <!-- Combined Payload -->
+    <g transform="translate(12, 75)" font-size="11" font-family="monospace">
+      <text y="15" fill="#166534" font-weight="bold">success: true</text>
+      <text y="35" fill="#166534">patient_id: 12</text>
+      <text y="55" fill="#166534">assessment_id: 28</text>
+      <text y="75" fill="#166534">referral_id: 18</text>
+      <text y="95" fill="#166534">followup_id: 18</text>
+
+      <rect x="-4" y="110" width="185" height="150" rx="5" fill="#ffffff" stroke="#86efac"/>
+      <text y="128" fill="#15803d" font-weight="bold" font-size="10.5">ml_assessment:</text>
+      <text y="146" fill="#334155" font-size="10">• overall: "HIGH"</text>
+      <text y="164" fill="#334155" font-size="10">• prob: 0.6455</text>
+      <text y="182" fill="#334155" font-size="10">• model_pred: 1</text>
+      <text y="200" fill="#334155" font-size="10">• red_flags: 2 items</text>
+      <text y="218" fill="#334155" font-size="10">• bmi: 25.71</text>
+      <text y="236" fill="#334155" font-size="10">• recommendation</text>
+      <text y="252" fill="#334155" font-size="10">• disclaimer</text>
+
+      <rect x="-4" y="270" width="185" height="130" rx="5" fill="#ffffff" stroke="#86efac"/>
+      <text y="288" fill="#15803d" font-weight="bold" font-size="10.5">triage_result (legacy):</text>
+      <text y="306" fill="#334155" font-size="10">• triage_level: "LEVEL 3"</text>
+      <text y="324" fill="#334155" font-size="10">• risk_category: "High"</text>
+      <text y="342" fill="#334155" font-size="10">• badge: "red"</text>
+      <text y="360" fill="#334155" font-size="10">• referral: true</text>
+      <text y="378" fill="#334155" font-size="10">• followup: true</text>
+      <text y="394" fill="#334155" font-size="10">• reasons: 4 items</text>
+    </g>
+  </g>
+
+  <!-- Bottom Global Note -->
+  <text x="575" y="735" text-anchor="middle" font-size="12" fill="#64748b">Main Backend coordinates client requests, maps schema, validates ML output, saves DB rows, and creates workflows atomically.</text>
+</svg>

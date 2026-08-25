@@ -1,0 +1,103 @@
+{
+  "model_name": "Sanjivani PCOS Risk Classifier",
+  "model_type": "LogisticRegression",
+  "version": "1.0.0",
+  "features": [
+    {
+      "name": " Age (yrs)",
+      "type": "integer",
+      "description": "Patient age in years",
+      "training_mean": 31.4167,
+      "training_scale": 5.4278
+    },
+    {
+      "name": "Weight (Kg)",
+      "type": "float",
+      "description": "Patient weight in kilograms",
+      "training_mean": 59.4141,
+      "training_scale": 11.1606
+    },
+    {
+      "name": "Height(Cm) ",
+      "type": "float",
+      "description": "Patient height in centimeters",
+      "training_mean": 156.3763,
+      "training_scale": 6.0679
+    },
+    {
+      "name": "BMI",
+      "type": "float",
+      "description": "Calculated Body Mass Index (weight / height_m^2)",
+      "training_mean": 24.2506,
+      "training_scale": 4.0941
+    },
+    {
+      "name": "Cycle(R/I)",
+      "type": "integer",
+      "description": "Menstrual cycle regularity encoded: 2 = Regular, 4 = Irregular",
+      "training_mean": 2.5764,
+      "training_scale": 0.9097
+    },
+    {
+      "name": "Cycle length(days)",
+      "type": "integer",
+      "description": "Menstrual bleeding / period duration in days (training range: 0-12 days)",
+      "training_mean": 4.9560,
+      "training_scale": 1.5261
+    },
+    {
+      "name": "Weight gain(Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if weight gain reported, 0 otherwise",
+      "training_mean": 0.3588,
+      "training_scale": 0.4796
+    },
+    {
+      "name": "hair growth(Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if hirsutism reported, 0 otherwise",
+      "training_mean": 0.2685,
+      "training_scale": 0.4432
+    },
+    {
+      "name": "Skin darkening (Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if skin darkening reported, 0 otherwise",
+      "training_mean": 0.3079,
+      "training_scale": 0.4616
+    },
+    {
+      "name": "Hair loss(Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if hair loss/thinning reported, 0 otherwise",
+      "training_mean": 0.4676,
+      "training_scale": 0.4989
+    },
+    {
+      "name": "Pimples(Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if acne/pimples reported, 0 otherwise",
+      "training_mean": 0.4907,
+      "training_scale": 0.4999
+    },
+    {
+      "name": "Fast food (Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if regular fast food consumption reported, 0 otherwise",
+      "training_mean": 0.5185,
+      "training_scale": 0.4997
+    },
+    {
+      "name": "Reg.Exercise(Y/N)",
+      "type": "integer",
+      "description": "Binary: 1 if regular exercise reported, 0 otherwise",
+      "training_mean": 0.2431,
+      "training_scale": 0.4289
+    }
+  ],
+  "decision_threshold": 0.40,
+  "cycle_length_training_range": {
+    "min": 0,
+    "max": 12
+  }
+}

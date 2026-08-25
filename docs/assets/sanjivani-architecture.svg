@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 820" width="100%" height="100%" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="mlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+    <linearGradient id="triageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.06" />
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.04" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7" />
+    </marker>
+    <marker id="arrowDark" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569" />
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#6366f1" />
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
+    </marker>
+  </defs>
+
+  <!-- Title Header -->
+  <text x="550" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">Sanjivani System Architecture</text>
+  <text x="550" y="60" text-anchor="middle" font-size="13" fill="#64748b">Decoupled 3-Tier Distributed Architecture &amp; Clinical Decision Pipeline</text>
+
+  <!-- Tier 1: Frontend Client -->
+  <g transform="translate(60, 90)">
+    <rect width="980" height="90" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="8" height="90" rx="4" fill="#0ea5e9" />
+    <text x="30" y="32" font-size="16" font-weight="700" fill="#0f172a">1. React Frontend Client</text>
+    <rect x="230" y="16" width="135" height="22" rx="11" fill="#e0f2fe"/>
+    <text x="297" y="31" text-anchor="middle" font-size="11" font-weight="600" fill="#0369a1">Port 5173 / Vite</text>
+    <text x="30" y="58" font-size="12" fill="#475569">• Multilingual Assessment Form Wizard (English &amp; Hindi)</text>
+    <text x="30" y="74" font-size="12" fill="#475569">• Role-Based Views: ASHA Worker Portal (Referral Dispatch) vs Patient View</text>
+    <text x="580" y="58" font-size="12" fill="#475569">• Visual Triage Presentation &amp; Secondary ML Score</text>
+    <text x="580" y="74" font-size="12" fill="#475569">• Ayushman Arogya Mandir GIS Map &amp; Referral Kanban</text>
+  </g>
+
+  <!-- Flow 1 -> 2 -->
+  <path d="M 550 180 L 550 215" stroke="#0284c7" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="420" y="188" width="260" height="22" rx="4" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="550" y="203" text-anchor="middle" font-size="11" font-weight="600" fill="#0284c7">POST /api/assessments (JSON)</text>
+
+  <!-- Strict Isolation Banner -->
+  <rect x="760" y="185" width="280" height="26" rx="5" fill="#fef2f2" stroke="#fecaca" stroke-dasharray="3 3"/>
+  <text x="900" y="202" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">🔒 FRONTEND NEVER CALLS ML DIRECTLY</text>
+
+  <!-- Tier 2: Main Sanjivani Backend -->
+  <g transform="translate(60, 225)">
+    <rect width="980" height="200" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="8" height="200" rx="4" fill="#0284c7" />
+    <text x="30" y="32" font-size="16" font-weight="700" fill="#0f172a">2. Sanjivani Main Backend Platform</text>
+    <rect x="330" y="16" width="165" height="22" rx="11" fill="#e0f2fe"/>
+    <text x="412" y="31" text-anchor="middle" font-size="11" font-weight="600" fill="#0369a1">FastAPI :8000 / SQLite</text>
+    
+    <!-- Sub-components inside Main Backend -->
+    <!-- Component 2A: Core API & DB -->
+    <rect x="30" y="55" width="280" height="125" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="45" y="78" font-size="13" font-weight="700" fill="#1e293b">Core API &amp; Workflows</text>
+    <text x="45" y="100" font-size="11.5" fill="#475569">• Patient Records &amp; Historical DB</text>
+    <text x="45" y="118" font-size="11.5" fill="#475569">• Auto-Referrals (Pending/Referred)</text>
+    <text x="45" y="136" font-size="11.5" fill="#475569">• Follow-Up Scheduler (3d / 7d)</text>
+    <text x="45" y="154" font-size="11.5" fill="#475569">• ASHA Operational Dashboard</text>
+
+    <!-- Component 2B: ML Payload Mapper -->
+    <rect x="340" y="55" width="300" height="125" rx="8" fill="#f0f9ff" stroke="#bae6fd"/>
+    <text x="355" y="78" font-size="13" font-weight="700" fill="#0369a1">ML Payload Mapper</text>
+    <text x="355" y="100" font-size="11.5" fill="#0284c7">• Validates 16 required ML fields</text>
+    <text x="355" y="118" font-size="11.5" font-weight="600" fill="#b91c1c">• bleeding_duration_days ➔ cycle_length</text>
+    <text x="355" y="136" font-size="11.5" fill="#0369a1">• Categorical to boolean mapping</text>
+    <text x="355" y="154" font-size="11.5" fill="#0369a1">• Isolates Sanjivani interval strings</text>
+
+    <!-- Component 2C: ML Client & Adapter -->
+    <rect x="670" y="55" width="280" height="125" rx="8" fill="#f5f3ff" stroke="#ddd6fe"/>
+    <text x="685" y="78" font-size="13" font-weight="700" fill="#5b21b6">ML Client &amp; Adapter</text>
+    <text x="685" y="100" font-size="11.5" fill="#6d28d9">• Resilient HTTP client (httpx)</text>
+    <text x="685" y="118" font-size="11.5" fill="#6d28d9">• Strict response schema validation</text>
+    <text x="685" y="136" font-size="11.5" fill="#6d28d9">• Adapts canonical to legacy levels</text>
+    <text x="685" y="154" font-size="11.5" fill="#6d28d9">• HTTP 503 fail-safe on ML timeout</text>
+  </g>
+
+  <!-- Flow 2 -> 3 -->
+  <path d="M 550 425 L 550 465" stroke="#6366f1" stroke-width="2.5" fill="none" marker-end="url(#arrowPurple)"/>
+  <rect x="390" y="433" width="320" height="22" rx="4" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="550" y="448" text-anchor="middle" font-size="11" font-weight="600" fill="#4f46e5">Server-to-Server: POST /predict (16 fields)</text>
+
+  <!-- Tier 3: Standalone ML Microservice -->
+  <g transform="translate(60, 475)">
+    <rect width="980" height="225" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="8" height="225" rx="4" fill="#7c3aed" />
+    <text x="30" y="32" font-size="16" font-weight="700" fill="#0f172a">3. Standalone ML Prediction &amp; Clinical Triage Service</text>
+    <rect x="490" y="16" width="220" height="22" rx="11" fill="#ede9fe"/>
+    <text x="600" y="31" text-anchor="middle" font-size="11" font-weight="600" fill="#6b21a8">FastAPI :8001 / Deployed Render</text>
+
+    <!-- Sub-components inside ML Service -->
+    <!-- 3A: Preprocessing & Scaling -->
+    <rect x="30" y="55" width="280" height="150" rx="8" fill="#ffffff" stroke="#e9d5ff"/>
+    <text x="45" y="78" font-size="13" font-weight="700" fill="#6b21a8">Preprocessing &amp; Scaling</text>
+    <text x="45" y="100" font-size="11.5" fill="#475569">• Generates BMI from height/weight</text>
+    <text x="45" y="118" font-size="11.5" fill="#475569">• Encodes cycle type (Regular=2, Irreg=4)</text>
+    <text x="45" y="136" font-size="11.5" fill="#475569">• Caps bleeding duration (0–12 days)</text>
+    <text x="45" y="154" font-size="11.5" fill="#475569">• Transforms 13 features via StandardScaler</text>
+    <text x="45" y="172" font-size="11.5" fill="#475569">• Detects out-of-distribution inputs</text>
+
+    <!-- 3B: Statistical Inference -->
+    <rect x="340" y="55" width="300" height="150" rx="8" fill="#ffffff" stroke="#e9d5ff"/>
+    <text x="355" y="78" font-size="13" font-weight="700" fill="#6b21a8">Statistical ML Model</text>
+    <text x="355" y="100" font-size="11.5" fill="#475569">• Scikit-learn Logistic Regression</text>
+    <text x="355" y="118" font-size="11.5" fill="#475569">• Output: pcos_probability (0.0 to 1.0)</text>
+    <text x="355" y="136" font-size="11.5" fill="#475569">• Decision threshold: 0.40</text>
+    <text x="355" y="154" font-size="11.5" fill="#475569">• model_prediction: 0 or 1</text>
+    <rect x="355" y="168" width="270" height="24" rx="4" fill="#fef3c7" stroke="#fde68a"/>
+    <text x="490" y="184" text-anchor="middle" font-size="10.5" font-weight="700" fill="#92400e">⚠️ STATISTICAL SCREENING SIGNAL (NOT DIAGNOSIS)</text>
+
+    <!-- 3C: Safety Rules & Canonical Triage -->
+    <rect x="670" y="55" width="280" height="150" rx="8" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="685" y="78" font-size="13" font-weight="700" fill="#047857">Safety Rules &amp; Canonical Triage</text>
+    <text x="685" y="100" font-size="11.5" fill="#065f46">• Evaluates acute red flags:</text>
+    <text x="695" y="118" font-size="11" fill="#047857">  - Prolonged/Extreme bleeding</text>
+    <text x="695" y="134" font-size="11" fill="#047857">  - Severe pain, Vomiting, Blood in stool</text>
+    <text x="685" y="154" font-size="11.5" font-weight="700" fill="#047857">AUTHORITATIVE OVERALL TRIAGE:</text>
+    <text x="685" y="172" font-size="11.5" font-weight="700" fill="#065f46">LOW  |  MODERATE  |  HIGH  |  CRITICAL</text>
+  </g>
+
+  <!-- Return Flow (ML -> Backend -> Frontend) -->
+  <path d="M 980 475 L 980 440" stroke="#059669" stroke-width="2" stroke-dasharray="4 4" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="990" y="458" font-size="11" font-weight="600" fill="#059669">Validated ML Response</text>
+
+  <!-- Bottom Summary Legend -->
+  <g transform="translate(60, 725)">
+    <rect width="980" height="70" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="25" y="26" font-size="13" font-weight="700" fill="#0f172a">Key Operational Principles:</text>
+    <text x="25" y="46" font-size="12" fill="#475569">1. <tspan font-weight="600">Zero Local Fallback:</tspan> If ML service is unreachable, backend returns HTTP 503 rather than fabricating fake probabilities.</text>
+    <text x="25" y="62" font-size="12" fill="#475569">2. <tspan font-weight="600">Coexistence:</tspan> Canonical overall triage (LOW/MODERATE/HIGH/CRITICAL) and legacy levels (LEVEL 1/2/3) coexist without loss of CRITICAL priority.</text>
+    <text x="580" y="46" font-size="12" fill="#475569">3. <tspan font-weight="600">Role Scoping:</tspan> ASHA workers see referral actions; patients see guidance.</text>
+    <text x="580" y="62" font-size="12" fill="#475569">4. <tspan font-weight="600">Environment:</tspan> ML_API_URL selects local (:8001) or deployed Render microservice.</text>
+  </g>
+</svg>

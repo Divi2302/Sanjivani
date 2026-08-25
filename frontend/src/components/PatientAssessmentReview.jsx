@@ -106,8 +106,17 @@ export default function PatientAssessmentReview({ patientCode, onBack, lang }) {
               <span className="font-mono text-xl font-black bg-slate-900 text-white px-3 py-1 rounded-xl">
                 {patient.patient_code}
               </span>
-              <span className={`px-4 py-1 rounded-full font-black text-xs uppercase tracking-wider ${
-                isLevel1 ? 'bg-emerald-600 text-white' : isLevel2 ? 'bg-amber-600 text-white' : 'bg-red-600 text-white'
+              {data.canonical_ml_result?.overall_prediction && (
+                <span className={`px-3.5 py-1 rounded-full font-black text-xs uppercase tracking-wider ${
+                  data.canonical_ml_result.overall_prediction === 'CRITICAL' ? 'bg-rose-700 text-white ring-1 ring-rose-400' :
+                  data.canonical_ml_result.overall_prediction === 'HIGH' ? 'bg-red-600 text-white' :
+                  data.canonical_ml_result.overall_prediction === 'MODERATE' ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'
+                }`}>
+                  {data.canonical_ml_result.overall_prediction}
+                </span>
+              )}
+              <span className={`px-3 py-1 rounded-full font-bold text-xs uppercase tracking-wider ${
+                isLevel1 ? 'bg-emerald-100 text-emerald-800' : isLevel2 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
               }`}>
                 {overview.triage_level}
               </span>
@@ -188,12 +197,24 @@ export default function PatientAssessmentReview({ patientCode, onBack, lang }) {
           </h3>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-slate-50 p-3 rounded-2xl">
-              <span className="text-slate-500 font-semibold block">Cycle Length</span>
+              <span className="text-slate-500 font-semibold block">Cycle Interval</span>
               <span className="font-bold text-slate-900 text-sm">{sec.menstrual_health.cycle_length}</span>
             </div>
             <div className="bg-slate-50 p-3 rounded-2xl">
               <span className="text-slate-500 font-semibold block">Cycle Regularity</span>
               <span className="font-bold text-slate-900 text-sm">{sec.menstrual_health.cycle_regularity}</span>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-2xl">
+              <span className="text-slate-500 font-semibold block">Bleeding Duration</span>
+              <span className="font-bold text-slate-900 text-sm">
+                {sec.menstrual_health.bleeding_duration_days != null ? `${sec.menstrual_health.bleeding_duration_days} days` : 'Not recorded'}
+              </span>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-2xl">
+              <span className="text-slate-500 font-semibold block">Heavy Bleeding</span>
+              <span className="font-bold text-slate-900 text-sm">
+                {sec.menstrual_health.heavy_bleeding === true ? 'Reported (Yes)' : sec.menstrual_health.heavy_bleeding === false ? 'No' : 'Not recorded'}
+              </span>
             </div>
             <div className="bg-slate-50 p-3 rounded-2xl col-span-2">
               <span className="text-slate-500 font-semibold block">Symptom Duration</span>

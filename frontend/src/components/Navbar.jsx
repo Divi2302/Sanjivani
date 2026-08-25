@@ -1,7 +1,10 @@
 import React from 'react';
-import { Stethoscope, User, MapPin, BarChart3, FileSpreadsheet, Search, Globe, LogOut } from 'lucide-react';
+import { Stethoscope, User, MapPin, BarChart3, FileSpreadsheet, Search, Globe, LogOut, Download } from 'lucide-react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export default function Navbar({ activeRole, setActiveRole, activeTab, setActiveTab, lang, setLang }) {
+  const { isInstallable, installPWA } = usePWAInstall();
+
   return (
     <header className="bg-emerald-900 text-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
@@ -93,8 +96,19 @@ export default function Navbar({ activeRole, setActiveRole, activeTab, setActive
           )}
         </nav>
 
-        {/* Language & Role Switcher */}
+        {/* Actions: Install PWA, Language & Role Switcher */}
         <div className="flex items-center gap-2">
+          {isInstallable && (
+            <button
+              onClick={installPWA}
+              className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs px-3 py-1.5 rounded-lg font-extrabold transition shadow animate-pulse"
+              title="Install Sanjivani App on your device"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{lang === 'hi' ? 'ऐप इंस्टॉल करें' : 'Install App'}</span>
+            </button>
+          )}
+
           <button
             onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
             className="flex items-center gap-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-xs px-3 py-1.5 rounded-lg border border-emerald-600 font-medium transition"

@@ -4,6 +4,7 @@ import { User, Activity, Calendar, Sparkles, Heart, AlertTriangle, ShieldCheck, 
 export default function AssessmentForm({ onAssessmentComplete, activeRole, lang }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // Form State
   const [formData, setFormData] = useState({
@@ -15,6 +16,8 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
 
     cycle_length: '21-35 days',
     cycle_regularity: 'Regular',
+    bleeding_duration_days: '',
+    heavy_bleeding: null,
     symptom_duration: '1-3 months',
 
     facial_hair: false,
@@ -50,13 +53,71 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const validateStep = (currentStep) => {
+    const newErrors = {};
+    if (currentStep === 3) {
+      const days = formData.bleeding_duration_days;
+      if (days === '' || days === null || days === undefined || isNaN(Number(days))) {
+        newErrors.bleeding_duration_days = lang === 'hi'
+          ? 'कृपया मासिक धर्म में रक्तस्राव के दिनों की संख्या (1-100) दर्ज करें।'
+          : 'Please enter the number of days menstrual bleeding usually lasts (1 to 100).';
+      } else if (Number(days) < 1 || Number(days) > 100) {
+        newErrors.bleeding_duration_days = lang === 'hi'
+          ? 'रक्तस्राव के दिन 1 से 100 के बीच होने चाहिए।'
+          : 'Bleeding duration must be between 1 and 100 days.';
+      }
+
+      if (formData.heavy_bleeding === null || typeof formData.heavy_bleeding !== 'boolean') {
+        newErrors.heavy_bleeding = lang === 'hi'
+          ? 'कृपया अत्यधिक रक्तस्राव के प्रश्न का उत्तर (हाँ या नहीं) चुनें।'
+          : 'Please specify whether you experience unusually heavy bleeding (Yes or No).';
+      }
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(step)) {
+      setStep(prev => prev + 1);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // PWA Offline Guard: Live internet is required for clinical assessment submission
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      alert(
+        lang === 'hi'
+          ? 'मूल्यांकन जमा करने के लिए इंटरनेट कनेक्शन आवश्यक है।'
+          : 'Internet connection is required to submit an assessment.'
+      );
+      return;
+    }
+
+    // Enforce step 3 validation before submitting
+    if (
+      formData.bleeding_duration_days === '' ||
+      formData.bleeding_duration_days === null ||
+      isNaN(Number(formData.bleeding_duration_days)) ||
+      Number(formData.bleeding_duration_days) < 1 ||
+      Number(formData.bleeding_duration_days) > 100 ||
+      formData.heavy_bleeding === null ||
+      typeof formData.heavy_bleeding !== 'boolean'
+    ) {
+      validateStep(3);
+      setStep(3);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const payload = {
         ...formData,
+        bleeding_duration_days: parseInt(formData.bleeding_duration_days, 10),
+        heavy_bleeding: Boolean(formData.heavy_bleeding),
         submitted_by_role: activeRole || 'ASHA'
       };
 
@@ -66,18 +127,28 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        data = null;
+      }
       setLoading(false);
 
-      if (data.success) {
+      if (response.ok && data && data.success) {
         onAssessmentComplete(data);
       } else {
-        alert("Error processing assessment. Please check inputs.");
+        const errorDetail = data && data.detail
+          ? data.detail
+          : (lang === 'hi'
+              ? 'मूल्यांकन सेवा अस्थायी रूप से अनुपलब्ध है। कृपया पुनः प्रयास करें।'
+              : 'Prediction service temporarily unavailable. Please try again.');
+        alert(errorDetail);
       }
     } catch (err) {
       console.error(err);
       setLoading(false);
-      alert("Backend API connection error. Make sure server is running on port 8000.");
+      alert(lang === 'hi' ? 'सर्वर कनेक्शन त्रुटि। कृपया सुनिश्चित करें कि बैकएंड चल रहा है।' : 'Backend API connection error. Make sure server is running on port 8000.');
     }
   };
 
@@ -248,11 +319,14 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
               </div>
             </div>
 
-            {/* Cycle Length */}
+            {/* Cycle Length (Interval between periods) */}
             <div>
-              <label className="block text-sm font-semibold text-slate-800 mb-2">
-                {lang === 'hi' ? 'मासिक चक्र की अवधि (Cycle Length)' : 'Menstrual Cycle Length'}
+              <label className="block text-sm font-semibold text-slate-800 mb-1">
+                {lang === 'hi' ? 'मासिक चक्र की अवधि / अंतराल (Cycle Interval)' : 'Menstrual Cycle Interval (Between periods)'}
               </label>
+              <p className="text-xs text-slate-500 mb-2">
+                {lang === 'hi' ? 'एक माहवारी के पहले दिन से अगली माहवारी के पहले दिन का समय' : 'Days from first day of one period to first day of the next'}
+              </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {['Less than 21 days', '21-35 days', 'More than 35 days', 'Varies significantly'].map((opt) => (
                   <button
@@ -274,8 +348,8 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
               <label className="block text-sm font-semibold text-slate-800 mb-2">
                 {lang === 'hi' ? 'मासिक धर्म की नियमितता (Regularity)' : 'Cycle Regularity'}
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {['Regular', 'Irregular', 'Frequently missed', 'Not sure'].map((opt) => (
+              <div className="grid grid-cols-3 gap-3">
+                {['Regular', 'Irregular', 'Frequently missed'].map((opt) => (
                   <button
                     key={opt}
                     type="button"
@@ -288,6 +362,96 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Bleeding Duration in Days */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 mb-1">
+                {lang === 'hi' ? 'मासिक धर्म में रक्तस्राव कितने दिनों तक रहता है? (Bleeding Duration)' : 'How many days does menstrual bleeding usually last?'} *
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                {lang === 'hi' ? 'रक्तस्राव के दिनों की वास्तविक संख्या दर्ज करें (सामान्य: 2-7 दिन)' : 'Enter exact duration of bleeding in days (Normal: 2 to 7 days)'}
+              </p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  placeholder={lang === 'hi' ? 'दिन (उदा. 5)' : 'e.g. 5'}
+                  value={formData.bleeding_duration_days}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleInputChange('bleeding_duration_days', val === '' ? '' : parseInt(val, 10));
+                    if (errors.bleeding_duration_days) {
+                      setErrors(prev => ({ ...prev, bleeding_duration_days: null }));
+                    }
+                  }}
+                  className={`w-36 p-3 rounded-xl border text-lg font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 ${
+                    errors.bleeding_duration_days ? 'border-red-500 bg-red-50' : 'border-slate-300'
+                  }`}
+                />
+                <span className="text-sm font-semibold text-slate-600">
+                  {lang === 'hi' ? 'दिन (Days)' : 'days'}
+                </span>
+              </div>
+              {errors.bleeding_duration_days && (
+                <p className="text-xs font-bold text-red-600 mt-1.5 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{errors.bleeding_duration_days}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Heavy Bleeding Toggle */}
+            <div className={`p-4 rounded-2xl border transition ${
+              errors.heavy_bleeding ? 'border-red-400 bg-red-50/50' : 'border-slate-200 bg-slate-50'
+            } flex flex-wrap items-center justify-between gap-3`}>
+              <div>
+                <h4 className="font-semibold text-slate-900 text-sm">
+                  {lang === 'hi' ? 'क्या आपको अत्यधिक रक्तस्राव (Heavy Bleeding) होता है?' : 'Do you experience unusually heavy menstrual bleeding?'} *
+                </h4>
+                <p className="text-xs text-slate-500">
+                  {lang === 'hi' ? 'अत्यधिक या असामान्य रूप से भारी प्रवाह' : 'Unusually heavy flow, passing large clots, or soaking through pads rapidly'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleInputChange('heavy_bleeding', true);
+                    if (errors.heavy_bleeding) {
+                      setErrors(prev => ({ ...prev, heavy_bleeding: null }));
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                    formData.heavy_bleeding === true ? 'bg-red-600 text-white shadow' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {lang === 'hi' ? 'हाँ (Yes)' : 'Yes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleInputChange('heavy_bleeding', false);
+                    if (errors.heavy_bleeding) {
+                      setErrors(prev => ({ ...prev, heavy_bleeding: null }));
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                    formData.heavy_bleeding === false ? 'bg-slate-700 text-white shadow' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {lang === 'hi' ? 'नहीं (No)' : 'No'}
+                </button>
+              </div>
+              {errors.heavy_bleeding && (
+                <div className="w-full">
+                  <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{errors.heavy_bleeding}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Symptom Duration */}
@@ -653,7 +817,7 @@ export default function AssessmentForm({ onAssessmentComplete, activeRole, lang 
           {step < 8 ? (
             <button
               type="button"
-              onClick={() => setStep(prev => prev + 1)}
+              onClick={handleNextStep}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-bold bg-emerald-600 hover:bg-emerald-700 shadow-md transition"
             >
               <span>{lang === 'hi' ? 'आगे बढ़ें (Next)' : 'Next Step'}</span>

@@ -5,8 +5,9 @@ import math
 import datetime
 import urllib.request
 import urllib.parse
-from fastapi import FastAPI, Depends, HTTPException, Query, Header
+from fastapi import FastAPI, Depends, HTTPException, Query, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from database.db import get_db, engine, Base
@@ -14,10 +15,19 @@ from database.models import Patient, Assessment, Referral, FollowUp, HealthcareC
 from database.schemas import AssessmentInputSchema, PredictionResultSchema, ReferralCreateSchema, FollowUpCreateSchema
 from database.init_db import init_db
 
-from engines.safety_engine import evaluate_safety_red_flags
-from engines.ml_engine import evaluate_ml_endocrine_risk
-from engines.triage_engine import determine_triage_level
-from engines.explainability_engine import generate_explainable_reasons
+from services.ml_payload_mapper import build_ml_payload, MLPayloadMappingError
+from services.ml_client import (
+    ml_client,
+    MLClientError,
+    MLConnectionError,
+    MLTimeoutError,
+    MLHttpError,
+    MLResponseValidationError,
+)
+from services.ml_response_adapter import (
+    adapt_ml_response_to_legacy,
+    to_prediction_result_schema,
+)
 
 # Initialize Database Schema & Seed Data
 init_db()
@@ -36,6 +46,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# -------------------------------------------------------------
+# 0. SYSTEM HEALTH CHECK
+# -------------------------------------------------------------
+@app.head("/health", tags=["System"])
+def health_head():
+    """
+    Lightweight HEAD health-check endpoint for uptime monitors (e.g. UptimeRobot, Render).
+    Returns HTTP 200 with zero response body.
+    """
+    return Response(status_code=200)
+
+
+@app.get("/health", tags=["System"])
+def health_check(db: Session = Depends(get_db)):
+    """
+    Lightweight health-check endpoint for process liveness and database connectivity.
+    Does NOT invoke external ML service or perform expensive operations.
+    """
+    db_status = "connected"
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        db_status = "error"
+
+    return {
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "service": "sanjivani-main-backend",
+        "database": db_status,
+    }
 
 # Helper: Calculate Haversine distance in KM
 def calculate_haversine_distance(lat1, lon1, lat2, lon2):
@@ -112,6 +152,32 @@ def lookup_patient(patient_code: str = Query(...), db: Session = Depends(get_db)
         except Exception:
             reasons = []
 
+    # Safe canonical ML extraction for backward-compatible consumption
+    canonical_ml = None
+    if latest_ast and (latest_ast.overall_prediction or latest_ast.pcos_probability is not None):
+        def _safe_load_json(val, default):
+            if not val:
+                return default
+            try:
+                return json.loads(val)
+            except Exception:
+                return default
+
+        canonical_ml = {
+            "ml_available": bool(latest_ast.ml_available) if latest_ast.ml_available is not None else True,
+            "ml_error": latest_ast.ml_error,
+            "pcos_probability": latest_ast.pcos_probability,
+            "model_prediction": latest_ast.model_prediction,
+            "model_prediction_label": latest_ast.model_prediction_label,
+            "overall_prediction": latest_ast.overall_prediction,
+            "overall_reasons": _safe_load_json(latest_ast.overall_reasons_json, []),
+            "red_flags": _safe_load_json(latest_ast.red_flags_json, []),
+            "recommendation": latest_ast.recommendation,
+            "warnings": _safe_load_json(latest_ast.warnings_json, []),
+            "model_limitations": _safe_load_json(latest_ast.model_limitations_json, []),
+            "disclaimer": latest_ast.disclaimer,
+        }
+
     return {
         "success": True,
         "patient": {
@@ -132,10 +198,13 @@ def lookup_patient(patient_code: str = Query(...), db: Session = Depends(get_db)
             "red_flag_triggered": latest_ast.red_flag_triggered if latest_ast else False,
             "reasons": reasons
         },
+        "canonical_ml_result": canonical_ml,
         "structured_sections": {
             "menstrual_health": {
                 "cycle_length": latest_ast.cycle_length if latest_ast else "21-35 days",
                 "cycle_regularity": latest_ast.cycle_regularity if latest_ast else "Regular",
+                "bleeding_duration_days": latest_ast.bleeding_duration_days if latest_ast else None,
+                "heavy_bleeding": latest_ast.heavy_bleeding if latest_ast else None,
                 "symptom_duration": latest_ast.symptom_duration if latest_ast else "1-3 months"
             },
             "endocrine_indicators": {
@@ -189,50 +258,56 @@ def lookup_patient(patient_code: str = Query(...), db: Session = Depends(get_db)
 @app.post("/api/predict", response_model=PredictionResultSchema)
 def predict_triage(data: AssessmentInputSchema):
     """
-    Core Two-Stage Pipeline:
-    1. Safety Engine
-    2. ML Endocrine Risk Estimation
-    3. Triage Level Determination
-    4. Plain-Language Reason Generation
+    Prediction & Clinical Triage Endpoint.
+    Translates input to ML schema, calls standalone ML prediction microservice,
+    and returns normalized legacy-compatible PredictionResultSchema.
     """
-    input_dict = data.dict()
-    safety_res = evaluate_safety_red_flags(input_dict)
-    ml_res = evaluate_ml_endocrine_risk(input_dict)
-    triage_res = determine_triage_level(safety_res, ml_res, input_dict)
-    reasons = generate_explainable_reasons(input_dict, safety_res, ml_res)
+    try:
+        ml_payload = build_ml_payload(data)
+    except MLPayloadMappingError as e:
+        raise HTTPException(status_code=422, detail=f"Invalid assessment data: {e}") from e
 
-    return PredictionResultSchema(
-        triage_level=triage_res['triage_level'],
-        triage_code=triage_res['triage_code'],
-        title=triage_res['title'],
-        title_hindi=triage_res['title_hindi'],
-        badge_color=triage_res['badge_color'],
-        risk_probability=ml_res['risk_probability'],
-        risk_category=ml_res['risk_category'],
-        calculated_bmi=ml_res['calculated_bmi'],
-        red_flag_triggered=safety_res['red_flag_triggered'],
-        recommended_action=triage_res['recommended_action'],
-        recommended_action_hindi=triage_res['recommended_action_hindi'],
-        reasons=reasons,
-        requires_referral=triage_res['requires_referral'],
-        requires_followup=triage_res['requires_followup']
-    )
+    try:
+        ml_response = ml_client.predict(ml_payload)
+    except MLTimeoutError as e:
+        raise HTTPException(status_code=503, detail="Prediction service request timed out.") from e
+    except (MLConnectionError, MLHttpError, MLResponseValidationError) as e:
+        raise HTTPException(status_code=503, detail="Standalone ML prediction service is temporarily unavailable.") from e
+
+    adapted = adapt_ml_response_to_legacy(ml_response)
+    return to_prediction_result_schema(adapted)
 
 # -------------------------------------------------------------
 # 4. ASSESSMENT SAVE & AUTOMATED WORKFLOW
 # -------------------------------------------------------------
 @app.post("/api/assessments")
 def create_assessment(data: AssessmentInputSchema, db: Session = Depends(get_db)):
-    input_dict = data.dict()
+    """
+    Assessment creation & automated referral workflow endpoint.
+    Invokes standalone ML prediction service for authoritative clinical triage
+    before persisting patient assessment and creating automated referrals.
+    """
+    # 1. Authoritative Clinical Prediction via Standalone ML Service
+    try:
+        ml_payload = build_ml_payload(data)
+    except MLPayloadMappingError as e:
+        raise HTTPException(status_code=422, detail=f"Invalid assessment data: {e}") from e
 
-    safety_res = evaluate_safety_red_flags(input_dict)
-    ml_res = evaluate_ml_endocrine_risk(input_dict)
-    triage_res = determine_triage_level(safety_res, ml_res, input_dict)
-    reasons = generate_explainable_reasons(input_dict, safety_res, ml_res)
+    try:
+        ml_response = ml_client.predict(ml_payload)
+    except MLTimeoutError as e:
+        raise HTTPException(status_code=503, detail="Assessment could not be processed: ML prediction service timed out.") from e
+    except (MLConnectionError, MLHttpError, MLResponseValidationError) as e:
+        raise HTTPException(status_code=503, detail="Assessment could not be processed: Standalone ML prediction service is unavailable.") from e
 
+    adapted = adapt_ml_response_to_legacy(ml_response)
+
+    # 2. Patient Lookup or Creation
     patient = None
     if data.patient_id:
         patient = db.query(Patient).filter(Patient.id == data.patient_id).first()
+    elif data.patient_code:
+        patient = db.query(Patient).filter(Patient.patient_code == data.patient_code).first()
     
     if not patient:
         code = data.patient_code if data.patient_code else f"PAT-{random.randint(1000, 9999)}"
@@ -247,15 +322,18 @@ def create_assessment(data: AssessmentInputSchema, db: Session = Depends(get_db)
         db.add(patient)
         db.flush()
 
+    # 3. Assessment Record Persistence
     assessment = Assessment(
         patient_id=patient.id,
         age=data.age,
         height_cm=data.height_cm,
         weight_kg=data.weight_kg,
-        bmi=ml_res['calculated_bmi'],
+        bmi=adapted['calculated_bmi'],
         weight_gain=bool(data.weight_gain),
         cycle_length=data.cycle_length,
         cycle_regularity=data.cycle_regularity,
+        bleeding_duration_days=data.bleeding_duration_days,
+        heavy_bleeding=bool(data.heavy_bleeding),
         symptom_duration=data.symptom_duration,
         facial_hair=bool(data.facial_hair),
         acne=bool(data.acne),
@@ -276,26 +354,42 @@ def create_assessment(data: AssessmentInputSchema, db: Session = Depends(get_db)
         pain_severity=data.pain_severity,
         pain_location=data.pain_location,
         wellbeing=data.wellbeing,
-        risk_probability=ml_res['risk_probability'],
-        risk_category=ml_res['risk_category'],
-        triage_level=triage_res['triage_level'],
-        red_flag_triggered=safety_res['red_flag_triggered'],
-        reasons_json=json.dumps([r['title'] for r in reasons]),
-        submitted_by_role=data.submitted_by_role
+        # Legacy Compatibility Outputs
+        risk_probability=adapted['risk_probability'],
+        risk_category=adapted['risk_category'],
+        triage_level=adapted['triage_level'],
+        red_flag_triggered=adapted['red_flag_triggered'],
+        reasons_json=json.dumps([r['title'] for r in adapted['reasons']]),
+        submitted_by_role=data.submitted_by_role,
+
+        # Canonical Standalone ML Prediction & Safety Service Outputs (Phase 4)
+        ml_available=True,
+        ml_error=None,
+        pcos_probability=ml_response.pcos_probability,
+        model_prediction=ml_response.model_prediction,
+        model_prediction_label=ml_response.model_prediction_label,
+        overall_prediction=ml_response.overall_prediction,
+        overall_reasons_json=json.dumps(ml_response.overall_reasons),
+        red_flags_json=json.dumps([rf.model_dump() if hasattr(rf, "model_dump") else rf for rf in ml_response.red_flags]),
+        recommendation=ml_response.recommendation,
+        warnings_json=json.dumps(ml_response.warnings),
+        model_limitations_json=json.dumps(ml_response.model_limitations),
+        disclaimer=ml_response.disclaimer
     )
     db.add(assessment)
     db.flush()
 
+    # 4. Automated Referral & Follow-up Trigger (LEVEL 2 or LEVEL 3)
     referral_id = None
     followup_id = None
-    if triage_res['triage_level'] in ['LEVEL 2', 'LEVEL 3']:
+    if adapted['triage_level'] in ['LEVEL 2', 'LEVEL 3']:
         ref = Referral(
             patient_id=patient.id,
             assessment_id=assessment.id,
             facility_name="Ayushman Arogya Mandir - Rampur",
             facility_type="Ayushman Arogya Mandir",
             status="Pending",
-            notes=f"Auto-generated referral for {triage_res['triage_level']} triage."
+            notes=f"Auto-generated referral for {adapted['triage_level']} ({adapted['canonical_overall_prediction']}) triage."
         )
         db.add(ref)
         db.flush()
@@ -304,9 +398,9 @@ def create_assessment(data: AssessmentInputSchema, db: Session = Depends(get_db)
         flw = FollowUp(
             patient_id=patient.id,
             assessment_id=assessment.id,
-            scheduled_date=datetime.datetime.utcnow() + datetime.timedelta(days=3 if triage_res['triage_level'] == 'LEVEL 3' else 7),
+            scheduled_date=datetime.datetime.utcnow() + datetime.timedelta(days=3 if adapted['triage_level'] == 'LEVEL 3' else 7),
             status="Pending",
-            asha_notes=f"Follow-up scheduled for {triage_res['triage_level']} case."
+            asha_notes=f"Follow-up scheduled for {adapted['triage_level']} ({adapted['canonical_overall_prediction']}) case."
         )
         db.add(flw)
         db.flush()
@@ -321,22 +415,21 @@ def create_assessment(data: AssessmentInputSchema, db: Session = Depends(get_db)
         "assessment_id": assessment.id,
         "referral_id": referral_id,
         "followup_id": followup_id,
-        "triage_result": PredictionResultSchema(
-            triage_level=triage_res['triage_level'],
-            triage_code=triage_res['triage_code'],
-            title=triage_res['title'],
-            title_hindi=triage_res['title_hindi'],
-            badge_color=triage_res['badge_color'],
-            risk_probability=ml_res['risk_probability'],
-            risk_category=ml_res['risk_category'],
-            calculated_bmi=ml_res['calculated_bmi'],
-            red_flag_triggered=safety_res['red_flag_triggered'],
-            recommended_action=triage_res['recommended_action'],
-            recommended_action_hindi=triage_res['recommended_action_hindi'],
-            reasons=reasons,
-            requires_referral=triage_res['requires_referral'],
-            requires_followup=triage_res['requires_followup']
-        )
+        "triage_result": to_prediction_result_schema(adapted),
+        "ml_assessment": {
+            "ml_available": True,
+            "pcos_probability": ml_response.pcos_probability,
+            "model_prediction": ml_response.model_prediction,
+            "model_prediction_label": ml_response.model_prediction_label,
+            "overall_prediction": ml_response.overall_prediction,
+            "overall_reasons": ml_response.overall_reasons,
+            "red_flags": [rf.model_dump() if hasattr(rf, "model_dump") else rf for rf in ml_response.red_flags],
+            "recommendation": ml_response.recommendation,
+            "warnings": ml_response.warnings,
+            "model_limitations": ml_response.model_limitations,
+            "bmi": ml_response.bmi,
+            "disclaimer": ml_response.disclaimer,
+        }
     }
 
 # -------------------------------------------------------------
@@ -741,27 +834,29 @@ def get_model_metrics(x_admin_token: str = Header(None)):
     be exposed to ASHA workers or Patients.
     Requires Admin Authorization Header 'X-Admin-Token'.
     """
-    if x_admin_token != "SANJIVANI_ADMIN_SECRET_2026":
+    expected_token = os.getenv("ADMIN_API_TOKEN")
+    if not expected_token:
         raise HTTPException(
-            status_code=403,
-            detail="Access Restricted: ML Model Governance parameters are restricted to Admin/Developer mode only."
+            status_code=503,
+            detail="Admin governance endpoint disabled: 'ADMIN_API_TOKEN' environment variable is not configured."
         )
 
-    metadata_path = "backend/models/model_metadata.json"
+    if not x_admin_token or x_admin_token != expected_token:
+        raise HTTPException(
+            status_code=403,
+            detail="Access Restricted: Invalid or missing Admin Authorization token."
+        )
+
+    metadata_path = "ml-service/models/model_metadata.json"
     if os.path.exists(metadata_path):
         with open(metadata_path, 'r') as f:
             return json.load(f)
     else:
         return {
-            "model_type": "RandomForestClassifier",
-            "metrics": {
-                "RandomForest": {
-                    "accuracy": 0.9779,
-                    "precision": 1.0,
-                    "recall": 0.9362,
-                    "f1_score": 0.967
-                }
-            }
+            "model_type": "LogisticRegression",
+            "feature_count": 13,
+            "architecture": "Standalone ML Microservice (/predict)",
+            "scaler": "StandardScaler"
         }
 
 if __name__ == "__main__":

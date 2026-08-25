@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="100%" height="100%" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="cardGlow" x="-3%" y="-3%" width="106%" height="110%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.06" />
+    </filter>
+    <marker id="plusArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#6366f1" />
+    </marker>
+    <marker id="outArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
+    </marker>
+  </defs>
+
+  <!-- Header Banner -->
+  <text x="500" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">ML Model Prediction vs. Overall Clinical Triage</text>
+  <text x="500" y="58" text-anchor="middle" font-size="13" fill="#64748b">Why Logistic Regression probability is a secondary statistical signal, not a medical diagnosis or final decision</text>
+
+  <!-- Big Callout Badge -->
+  <rect x="250" y="75" width="500" height="32" rx="16" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="500" y="96" text-anchor="middle" font-size="13" font-weight="800" fill="#b45309">MODEL OUTPUT ≠ FINAL CLINICAL TRIAGE</text>
+
+  <!-- Left: Statistical ML Model Output -->
+  <g transform="translate(60, 125)">
+    <rect width="400" height="230" rx="8" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5" filter="url(#cardGlow)"/>
+    <rect x="0" y="0" width="400" height="38" rx="8" fill="#ede9fe"/>
+    <text x="200" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#6b21a8">1. Statistical ML Model Output</text>
+    
+    <g transform="translate(20, 55)">
+      <text y="20" font-size="12" font-weight="700" fill="#4338ca">Algorithm: <tspan font-weight="400" fill="#334155">Scikit-learn Logistic Regression</tspan></text>
+      <text y="40" font-size="12" font-weight="700" fill="#4338ca">Input: <tspan font-weight="400" fill="#334155">13 preprocessed &amp; scaled features</tspan></text>
+      
+      <rect x="0" y="55" width="360" height="60" rx="6" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="15" y="78" font-size="12" font-weight="600" fill="#6b21a8">pcos_probability = 0.6455 (64.5%)</text>
+      <text x="15" y="98" font-size="11" fill="#64748b">model_prediction = 1 ("Higher PCOS-related risk")</text>
+
+      <rect x="0" y="125" width="360" height="35" rx="5" fill="#fef2f2" stroke="#fecaca"/>
+      <text x="180" y="147" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">⚠️ Early statistical signal ONLY — NOT a diagnosis</text>
+    </g>
+  </g>
+
+  <!-- Plus Sign -->
+  <circle cx="500" cy="240" r="18" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="500" y="247" text-anchor="middle" font-size="20" font-weight="bold" fill="#4f46e5">+</text>
+
+  <!-- Right: Deterministic Clinical Safety Rules -->
+  <g transform="translate(540, 125)">
+    <rect width="400" height="230" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" filter="url(#cardGlow)"/>
+    <rect x="0" y="0" width="400" height="38" rx="8" fill="#dcfce7"/>
+    <text x="200" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">2. Deterministic Safety &amp; Red-Flag Layer</text>
+
+    <g transform="translate(20, 55)">
+      <text y="20" font-size="12" font-weight="700" fill="#166534">Rule Engine: <tspan font-weight="400" fill="#334155">Explicit clinical safety checks</tspan></text>
+      <text y="40" font-size="12" font-weight="700" fill="#166534">Evaluated Red Flags:</text>
+
+      <rect x="0" y="55" width="360" height="105" rx="6" fill="#ffffff" stroke="#bbf7d0"/>
+      <text x="15" y="75" font-size="11.5" fill="#b91c1c">🔴 Heavy Menstrual Bleeding: <tspan font-weight="700">TRUE</tspan></text>
+      <text x="15" y="95" font-size="11.5" fill="#b91c1c">🔴 Persistent Nausea / Vomiting: <tspan font-weight="700">TRUE</tspan></text>
+      <text x="15" y="115" font-size="11" fill="#475569">⚪ Severe Pelvic Pain (≥4): FALSE (Patient reported 2)</text>
+      <text x="15" y="135" font-size="11" fill="#475569">⚪ Blood in Stool: FALSE</text>
+      <text x="15" y="150" font-size="10.5" fill="#15803d" font-weight="600">➔ 2 High-Severity Clinical Red Flags Detected</text>
+    </g>
+  </g>
+
+  <!-- Combined Arrow Down -->
+  <path d="M 500 365 L 500 405" stroke="#059669" stroke-width="2.5" fill="none" marker-end="url(#outArrow)"/>
+
+  <!-- Bottom: Authoritative Overall Triage & Workflow -->
+  <g transform="translate(60, 415)">
+    <rect width="880" height="175" rx="8" fill="#ffffff" stroke="#059669" stroke-width="2" filter="url(#cardGlow)"/>
+    <rect x="0" y="0" width="880" height="38" rx="8" fill="#059669"/>
+    <text x="440" y="25" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">3. Final Canonical Clinical Triage Outcome</text>
+
+    <g transform="translate(30, 55)">
+      <!-- Left side: Canonical result -->
+      <rect x="0" y="0" width="380" height="105" rx="6" fill="#f0fdf4" stroke="#a7f3d0"/>
+      <text x="20" y="24" font-size="13" font-weight="700" fill="#065f46">Canonical Overall Triage: <tspan fill="#b91c1c">HIGH</tspan></text>
+      <text x="20" y="46" font-size="11" fill="#334155">• Determined by combination of ML probability + acute red flags</text>
+      <text x="20" y="66" font-size="11" fill="#334155">• Actionable Recommendation: Prompt clinical consultation</text>
+      <text x="20" y="86" font-size="11" font-weight="600" fill="#047857">• Primary prominent badge displayed to ASHA worker &amp; patient</text>
+
+      <!-- Right side: Legacy automated workflows -->
+      <rect x="420" y="0" width="400" height="105" rx="6" fill="#eff6ff" stroke="#bfdbfe"/>
+      <text x="440" y="24" font-size="13" font-weight="700" fill="#1e40af">Automated Platform Workflow</text>
+      <text x="440" y="46" font-size="11" fill="#334155">• Legacy Compatibility: <tspan font-weight="700" fill="#1e40af">LEVEL 3</tspan> (High Priority Escalation)</text>
+      <text x="440" y="66" font-size="11" fill="#334155">• Automated Referral Created: <tspan font-weight="600" fill="#1e40af">ID #18 (Pending dispatch to PHC)</tspan></text>
+      <text x="440" y="86" font-size="11" fill="#334155">• Automated Follow-Up Scheduled: <tspan font-weight="600" fill="#1e40af">ID #18 (Due in 3 days)</tspan></text>
+    </g>
+  </g>
+</svg>
