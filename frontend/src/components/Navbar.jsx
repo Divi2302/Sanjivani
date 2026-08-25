@@ -119,10 +119,10 @@ export default function Navbar({ activeRole, setActiveRole, activeTab, setActive
 
           <button
             onClick={() => setActiveRole(null)}
-            className="flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs px-2.5 py-1.5 rounded-lg border border-amber-500/40 font-medium transition"
+            className="flex items-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs px-2.5 py-1.5 rounded-lg border border-red-500/40 font-medium transition"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>{lang === 'hi' ? 'रोल बदलें' : 'Switch Role'}</span>
+            <span>{lang === 'hi' ? 'लॉग आउट' : 'Log Out'}</span>
           </button>
         </div>
 
